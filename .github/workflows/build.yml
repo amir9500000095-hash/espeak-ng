@@ -1,0 +1,57 @@
+name: Build Amirhossein
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-22.04
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: نصب ابزارها
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake libtool pkg-config libsonic-dev
+
+      - name: اعمال تغییرات امیرحسین و تیم شاپرک
+        run: |
+          STRINGS="android/app/src/main/res/values/strings.xml"
+          PREFS="android/app/src/main/res/xml/preferences.xml"
+
+          if [ -f "$STRINGS" ]; then
+            # 1️⃣ نام برنامه فقط امیرحسین
+            sed -i 's/eSpeak NG/امیرحسین/g' "$STRINGS"
+
+            # 2️⃣ صفحه اصلی
+            sed -i 's/An open source speech synthesizer/Powered by Shaparak Team/g' "$STRINGS"
+
+            # 3️⃣ درباره ما: توضیح بلند + لینک کانال
+            sed -i '/about/s|$|\nتیم شاپرک یک تیم خلاق و مستقل است که با تمرکز بر دسترس‌پذیری، نوآوری و حمایت از کاربران نابینا و کم‌بینا فعالیت می‌کند.\n\nما در تیم شاپرک تلاش می‌کنیم ابزارهایی بسازیم که زندگی دیجیتال را ساده‌تر، سریع‌تر و انسانی‌تر کند؛ از توسعه موتورهای صوتی فارسی و ابزارهای گفتاری گرفته، تا ساخت برنامه‌ها، رابط‌های کاربری ساده، پروژه‌های آموزشی و ایده‌هایی که شاید امروز کوچک باشند، اما فردا زندگی خیلی‌ها را تغییر بدهند.\n\nهدف ما فقط ساخت نرم‌افزار نیست؛ ما به دنبال ساخت تجربه‌ای هستیم که کاربر احساس احترام، راحتی و استقلال کند.\n\nاگر دوست دارید در جریان پروژه‌ها، نسخه‌های جدید، ایده‌ها و آموزش‌های تیم شاپرک باشید، حتماً به کانال رسمی ما سر بزنید و همراه ما باشید.\n\nhttps://t.me/shaparakteamapp|' "$STRINGS"
+          fi
+
+          if [ -f "$PREFS" ]; then
+            # 4️⃣ افزایش تن صدا / صدای توندتر
+            sed -i 's/value="50"/value="55"/g' "$PREFS"
+          fi
+
+          echo "Branding applied and voice pitch set to more vivid."
+
+      - name: نصب جاوا
+        uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - name: ساخت APK دیباگ با صدای توند
+        working-directory: android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+
+      - name: آپلود APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Amirhossein
+          path: android/app/build/outputs/apk/debug/app-debug.apk
