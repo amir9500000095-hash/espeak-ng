@@ -1,0 +1,58 @@
+name: Build Amirhossein Special Edition
+on: 
+  workflow_dispatch:
+
+jobs:
+  build-android:
+    runs-on: ubuntu-22.04
+    steps:
+      # 1️⃣ بررسی و دریافت کد
+      - uses: actions/checkout@v4
+
+      # 2️⃣ نصب وابستگی‌ها (در صورت نیاز)
+      - name: Install Dependencies (نصب ابزارها)
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y autoconf automake libtool pkg-config sonic
+
+      # 3️⃣ اعمال تغییرات مخصوص امیرحسین
+      - name: Apply Amirhossein Modifications (اعمال تغییرات)
+        run: |
+          # تغییر نام برنامه در AndroidManifest.xml
+          sed -i 's/android:label="[^"]*"/android:label="امیرحسین"/g' AndroidManifest.xml
+          
+          # اضافه کردن متن Powered by و درباره ما + لینک کانال
+          mkdir -p src/com/reecedunn/espeak/res/values
+          cat > src/com/reecedunn/espeak/res/values/strings.xml <<EOL
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">امیرحسین</string>
+    <string name="powered_by">ساخته شده توسط تیم شاپرک آکادمی همدل</string>
+    <string name="about_text">تیم شاپرک آکادمی همدل برای علاقه‌مندان به نوآوری ابزارها و پروژه‌های صوتی می‌سازد. در این برنامه شما می‌توانید از موتور صوتی اختصاصی استفاده کنید و برای مشاهده آخرین اخبار و آموزش‌ها، به کانال ما در تلگرام مراجعه کنید: https://t.me/shaparakteamapp</string>
+</resources>
+EOL
+
+          # بهینه‌سازی صدا (توندتر کردن)
+          sed -i 's/value="50"/value="45"/g' src/com/reecedunn/espeak/res/values/preferences.xml || echo "preferences.xml موجود نیست، رد شد."
+
+          echo "✅ تغییرات اعمال شد: اسم برنامه، Powered by، درباره ما و لینک کانال اضافه شد، صدا توندتر شد."
+
+      # 4️⃣ نصب Java
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '17'
+
+      # 5️⃣ ساخت APK
+      - name: Build APK
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --stacktrace
+
+      # 6️⃣ آپلود فایل نهایی
+      - name: Upload Amirhossein APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: Amirhossein-App-Shaparak
+          path: app/build/outputs/apk/debug/app-debug.apk
